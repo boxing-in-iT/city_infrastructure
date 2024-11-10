@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>City Infrastructure Recommendation</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+    <style>
+      #map {
+        height: 500px;
+        width: 100%;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Рекомендаційна система інфраструктури міста</h1>
+
+    <label for="category">Виберіть категорію:</label>
+    <select id="category">
+      <option value="school">Школи</option>
+      <option value="hospital">Лікарні</option>
+    </select>
+
+    <button onclick="getRecommendation()">Отримати рекомендацію</button>
+    <p id="recommendation"></p>
+
+    <button onclick="sendFeedback('подтвердить')">Підтвердити</button>
+    <button onclick="sendFeedback('отклонить')">Відхилити</button>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+      let map;
+      let markers = [];
+
+      // Initialize Leaflet map
+      function initMap() {
+        map = L.map("map").setView([50.4501, 30.5234], 12); // Center on Kyiv
+
+        // Add a tile layer
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+      }
+
+      function getRecommendation() {
+        const category = document.getElementById("category").value;
+        fetch("/recommend", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ category: category }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("recommendation").innerText =
+              data.recommendation;
+            updateMap(data.locations);
+          });
+      }
+
+      function updateMap(locations) {
+        // Remove existing markers
+        markers.forEach((marker) => map.removeLayer(marker));
+        markers = [];
+
+        // Add new markers for the selected category
+        locations.forEach((location) => {
+          const marker = L.marker([location.lat, location.lon]).addTo(map);
+          marker.bindPopup(location.name);
+          markers.push(marker);
+        });
+      }
+
+      function sendFeedback(feedback) {
+        const category = document.getElementById("category").value;
+        fetch("/recommend", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ category: category, feedback: feedback }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("recommendation").innerText =
+              data.recommendation;
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", initMap);
+    </script>
+  </body>
+</html>

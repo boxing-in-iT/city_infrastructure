@@ -1,24 +1,89 @@
+/* Основной стиль для body */
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Arial", sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 50px;
+  margin: 0;
+  padding: 20px;
+  background-color: #f4f7fc;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
+/* Заголовок */
 h1 {
-  color: #333;
+  color: #2c3e50;
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: bold;
 }
 
-button {
-  margin: 10px;
+/* Стиль для выпадающего списка */
+select {
+  font-size: 16px;
   padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  margin: 10px 0;
+  width: 200px;
+  box-sizing: border-box;
+}
+
+/* Стиль для кнопок */
+button {
+  padding: 12px 20px;
   font-size: 16px;
   cursor: pointer;
+  border-radius: 5px;
+  border: none;
+  background-color: #3498db;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin: 10px;
 }
 
+button:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Стиль для текста с рекомендацией */
 p {
   font-size: 18px;
   font-weight: bold;
   color: #555;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Контейнер карты */
+#map {
+  height: 500px;
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  select {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+  }
 }

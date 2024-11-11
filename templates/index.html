@@ -22,10 +22,30 @@
   <body>
     <h1>Рекомендаційна система інфраструктури міста</h1>
 
+    <label for="city">Виберіть місто:</label>
+    <select id="city" onchange="getRecommendation()">
+      <!-- вызов getRecommendation при выборе города -->
+      <option value="Kyiv, Ukraine">Київ</option>
+      <option value="Lviv, Ukraine">Львів</option>
+      <option value="Odesa, Ukraine">Одеса</option>
+      <option value="Dnipro, Ukraine">Дніпро</option>
+      <option value="Kharkiv, Ukraine">Харків</option>
+      <option value="Zaporizhzhia, Ukraine">Запоріжжя</option>
+      <option value="Vinnytsia, Ukraine">Вінниця</option>
+      <option value="Cherkasy, Ukraine">Черкаси</option>
+      <option value="Ivano-Frankivsk, Ukraine">Івано-Франківськ</option>
+      <option value="Poltava, Ukraine">Полтава</option>
+      <option value="Chernivtsi, Ukraine">Чернівці</option>
+      <option value="Khmelnytskyi, Ukraine">Хмельницький</option>
+      <!-- Добавьте другие города при необходимости -->
+    </select>
+
     <label for="category">Виберіть категорію:</label>
     <select id="category">
       <option value="school">Школи</option>
       <option value="hospital">Лікарні</option>
+      <option value="park">Парки</option>
+      <option value="restaurant">Ресторани</option>
     </select>
 
     <button onclick="getRecommendation()">Отримати рекомендацію</button>
@@ -43,7 +63,7 @@
 
       // Initialize Leaflet map
       function initMap() {
-        map = L.map("map").setView([50.4501, 30.5234], 12); // Center on Kyiv
+        map = L.map("map").setView([50.4501, 30.5234], 12); // Default view on Kyiv
 
         // Add a tile layer
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -54,18 +74,20 @@
 
       function getRecommendation() {
         const category = document.getElementById("category").value;
+        const city = document.getElementById("city").value;
         fetch("/recommend", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ category: category }),
+          body: JSON.stringify({ category: category, city: city }),
         })
           .then((response) => response.json())
           .then((data) => {
             document.getElementById("recommendation").innerText =
               data.recommendation;
             updateMap(data.locations);
+            centerMapOnCity(city); // Центрирование карты на выбранном городе
           });
       }
 
@@ -82,14 +104,38 @@
         });
       }
 
+      function centerMapOnCity(city) {
+        const cityCoordinates = {
+          "Kyiv, Ukraine": [50.4501, 30.5234],
+          "Lviv, Ukraine": [49.8397, 24.0297],
+          "Odesa, Ukraine": [46.4825, 30.7233],
+          "Dnipro, Ukraine": [48.4647, 35.0462],
+          "Kharkiv, Ukraine": [49.9935, 36.2304],
+          "Zaporizhzhia, Ukraine": [47.8388, 35.1396],
+          "Vinnytsia, Ukraine": [49.2328, 28.4809],
+          "Cherkasy, Ukraine": [49.4444, 32.0598],
+          "Ivano-Frankivsk, Ukraine": [48.9226, 24.7103],
+          "Poltava, Ukraine": [49.5883, 34.5514],
+          "Chernivtsi, Ukraine": [48.2915, 25.9403],
+          "Khmelnytskyi, Ukraine": [49.4216, 26.9965],
+        };
+        const coordinates = cityCoordinates[city] || [50.4501, 30.5234];
+        map.setView(coordinates, 12);
+      }
+
       function sendFeedback(feedback) {
         const category = document.getElementById("category").value;
+        const city = document.getElementById("city").value;
         fetch("/recommend", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ category: category, feedback: feedback }),
+          body: JSON.stringify({
+            category: category,
+            feedback: feedback,
+            city: city,
+          }),
         })
           .then((response) => response.json())
           .then((data) => {

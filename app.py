@@ -4,49 +4,62 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# Load city infrastructure data
+# Загрузка данных по городу и инфраструктуре
 def load_city_data(city_name="Kyiv, Ukraine"):
-    # Загружаем данные по инфраструктуре
-    schools = ox.features_from_place(city_name, tags={'amenity': 'school'})
-    hospitals = ox.features_from_place(city_name, tags={'amenity': 'hospital'})
+    # Загружаем данные по инфраструктуре и кешируем
+    infrastructure_tags = {'school': {'amenity': 'school'},
+                           'hospital': {'amenity': 'hospital'},
+                           'park': {'leisure': 'park'},
+                           'restaurant': {'amenity': 'restaurant'}}
     
-    # Создаем DataFrame
-    schools_df = pd.DataFrame(schools[['name', 'geometry']])
-    hospitals_df = pd.DataFrame(hospitals[['name', 'geometry']])
-    schools_df['type'] = 'school'
-    hospitals_df['type'] = 'hospital'
+    infrastructure_data = {}
+    for name, tags in infrastructure_tags.items():
+        data = ox.features_from_place(city_name, tags=tags)
+        infrastructure_data[name] = pd.DataFrame(data[['name', 'geometry']])
+        infrastructure_data[name]['type'] = name
     
-    # Объединяем в один DataFrame
-    infrastructure_df = pd.concat([schools_df, hospitals_df], ignore_index=True)
+    infrastructure_df = pd.concat(infrastructure_data.values(), ignore_index=True)
     
-    # Получаем площадь города
+    # Получаем площадь и численность населения города
     city_boundary = ox.geocode_to_gdf(city_name)
-    city_area_km2 = city_boundary.geometry.area[0] / 1e6  # Перевод из м² в км²
+    city_area_km2 = city_boundary.geometry.area[0] / 1e6
+    population = get_city_population(city_name)
     
-    return infrastructure_df, city_area_km2
+    return infrastructure_df, city_area_km2, population
 
-# Load city data and area at startup
-city_data, city_area_km2 = load_city_data()
+def get_city_population(city_name):
+    population_data = {
+        "Kyiv, Ukraine": 2804000,
+        "Lviv, Ukraine": 721301,
+        "Odesa, Ukraine": 1019301,
+        "Dnipro, Ukraine": 993000,
+        "Kharkiv, Ukraine": 1443200,
+        # Добавьте другие города
+    }
+    return population_data.get(city_name, 0)
 
-# Main page
+# Главная страница
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Recommendation endpoint
+# Эндпоинт рекомендаций
 @app.route('/recommend', methods=['POST'])
 def recommend():
     category = request.json.get('category')
     feedback = request.json.get('feedback')
+    city_name = request.json.get('city', 'Kyiv, Ukraine')
     
-    # Устанавливаем порог на основе площади города
-    min_objects_per_km2 = 0.5  # Минимум 0.5 объектов на км²
-    min_required_objects = int(city_area_km2 * min_objects_per_km2)
+    # Загрузка данных города
+    city_data, city_area_km2, population = load_city_data(city_name)
     
-    # Фильтруем данные по выбранной категории
+    # Определяем требуемое количество объектов с учетом плотности населения и площади
+    min_objects_per_100k = 5
+    min_required_objects = int((population / 100000) * min_objects_per_100k)
+    
+    # Фильтруем данные по категории
     filtered_data = city_data[city_data['type'] == category].dropna(subset=["name"])
     
-    # Извлекаем информацию для отображения и обрабатываем NaN значения
     locations = [
         {
             "name": row["name"] if pd.notna(row["name"]) else "Unnamed Location",
@@ -56,18 +69,24 @@ def recommend():
         for _, row in filtered_data.iterrows()
     ]
     
-    # Проверяем, достаточно ли объектов
-    recommendation = (
-        f"Недостаточно объектов категории {category}. Рекомендуется добавить."
-        if len(filtered_data) < min_required_objects
-        else f"В категории {category} достаточно объектов."
-    )
+    # Проверка на количество объектов
+    current_object_count = len(filtered_data)
+    if current_object_count < min_required_objects:
+        additional_objects_needed = min_required_objects - current_object_count
+        recommendation = (
+            f"Недостаточно объектов категории '{category}'. "
+            f"Рекомендуется добавить ещё {additional_objects_needed} объектов."
+        )
+    else:
+        recommendation = f"В категории '{category}' достаточно объектов."
+    
+    recommendation += f" Найдено {current_object_count} объектов."
     
     # Обработка обратной связи
     if feedback == "подтвердить":
         recommendation += " Спасибо за подтверждение."
     elif feedback == "отклонить":
-        recommendation += " Мы учтем ваш отзыв и улучшим рекомендацию."
+        recommendation += " Мы учтем ваш отзыв."
     
     return jsonify({"recommendation": recommendation, "locations": locations})
 

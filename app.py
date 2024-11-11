@@ -5,12 +5,19 @@ import pandas as pd
 app = Flask(__name__)
 
 # Загрузка данных по городу и инфраструктуре
+# Загрузка данных по городу и инфраструктуре
 def load_city_data(city_name="Kyiv, Ukraine"):
-    # Загружаем данные по инфраструктуре и кешируем
-    infrastructure_tags = {'school': {'amenity': 'school'},
-                           'hospital': {'amenity': 'hospital'},
-                           'park': {'leisure': 'park'},
-                           'restaurant': {'amenity': 'restaurant'}}
+    # Обновленные теги инфраструктуры
+    infrastructure_tags = {
+        'school': {'amenity': 'school'},
+        'hospital': {'amenity': 'hospital'},
+        'park': {'leisure': 'park'},
+        'restaurant': {'amenity': 'restaurant'},
+        'pharmacy': {'amenity': 'pharmacy'},
+        'gym': {'leisure': 'fitness_centre'},
+        'library': {'amenity': 'library'},
+        'mall': {'shop': 'mall'}
+    }
     
     infrastructure_data = {}
     for name, tags in infrastructure_tags.items():
@@ -20,12 +27,12 @@ def load_city_data(city_name="Kyiv, Ukraine"):
     
     infrastructure_df = pd.concat(infrastructure_data.values(), ignore_index=True)
     
-    # Получаем площадь и численность населения города
     city_boundary = ox.geocode_to_gdf(city_name)
     city_area_km2 = city_boundary.geometry.area[0] / 1e6
     population = get_city_population(city_name)
     
     return infrastructure_df, city_area_km2, population
+
 
 def get_city_population(city_name):
     population_data = {

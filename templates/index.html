@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
   <head>
     <meta charset="UTF-8" />
-    <title>City Infrastructure Recommendation</title>
+    <title>Рекомендації щодо інфраструктури міста</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
@@ -24,7 +24,6 @@
 
     <label for="city">Виберіть місто:</label>
     <select id="city" onchange="getRecommendation()">
-      <!-- вызов getRecommendation при выборе города -->
       <option value="Kyiv, Ukraine">Київ</option>
       <option value="Lviv, Ukraine">Львів</option>
       <option value="Odesa, Ukraine">Одеса</option>
@@ -37,7 +36,6 @@
       <option value="Poltava, Ukraine">Полтава</option>
       <option value="Chernivtsi, Ukraine">Чернівці</option>
       <option value="Khmelnytskyi, Ukraine">Хмельницький</option>
-      <!-- Добавьте другие города при необходимости -->
     </select>
 
     <label for="category">Виберіть категорію:</label>
@@ -55,8 +53,8 @@
     <button onclick="getRecommendation()">Отримати рекомендацію</button>
     <p id="recommendation"></p>
 
-    <button onclick="sendFeedback('подтвердить')">Підтвердити</button>
-    <button onclick="sendFeedback('отклонить')">Відхилити</button>
+    <button onclick="sendFeedback('підтвердити')">Підтвердити</button>
+    <button onclick="sendFeedback('відхилити')">Відхилити</button>
 
     <div id="map"></div>
 
@@ -65,11 +63,9 @@
       let map;
       let markers = [];
 
-      // Initialize Leaflet map
       function initMap() {
-        map = L.map("map").setView([50.4501, 30.5234], 12); // Default view on Kyiv
+        map = L.map("map").setView([50.4501, 30.5234], 12);
 
-        // Add a tile layer
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           maxZoom: 18,
           attribution: "© OpenStreetMap contributors",
@@ -79,6 +75,10 @@
       function getRecommendation() {
         const category = document.getElementById("category").value;
         const city = document.getElementById("city").value;
+
+        markers.forEach((marker) => map.removeLayer(marker));
+        markers = [];
+
         fetch("/recommend", {
           method: "POST",
           headers: {
@@ -91,16 +91,14 @@
             document.getElementById("recommendation").innerText =
               data.recommendation;
             updateMap(data.locations);
-            centerMapOnCity(city); // Центрирование карты на выбранном городе
+            centerMapOnCity(city);
           });
       }
 
       function updateMap(locations) {
-        // Remove existing markers
         markers.forEach((marker) => map.removeLayer(marker));
         markers = [];
 
-        // Add new markers for the selected category
         locations.forEach((location) => {
           const marker = L.marker([location.lat, location.lon]).addTo(map);
           marker.bindPopup(location.name);

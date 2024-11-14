@@ -17,25 +17,35 @@
         width: 100%;
         margin-top: 20px;
       }
+      #analytics-panel {
+        padding: 10px;
+        margin-top: 20px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+      }
+      #analytics-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      #analytics-table th,
+      #analytics-table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <h1>Рекомендаційна система інфраструктури міста</h1>
 
     <label for="city">Виберіть місто:</label>
-    <select id="city" onchange="getRecommendation()">
+    <select id="city" onchange="getRecommendation(); getAnalytics();">
       <option value="Kyiv, Ukraine">Київ</option>
       <option value="Lviv, Ukraine">Львів</option>
       <option value="Odesa, Ukraine">Одеса</option>
       <option value="Dnipro, Ukraine">Дніпро</option>
       <option value="Kharkiv, Ukraine">Харків</option>
       <option value="Zaporizhzhia, Ukraine">Запоріжжя</option>
-      <option value="Vinnytsia, Ukraine">Вінниця</option>
-      <option value="Cherkasy, Ukraine">Черкаси</option>
-      <option value="Ivano-Frankivsk, Ukraine">Івано-Франківськ</option>
-      <option value="Poltava, Ukraine">Полтава</option>
-      <option value="Chernivtsi, Ukraine">Чернівці</option>
-      <option value="Khmelnytskyi, Ukraine">Хмельницький</option>
     </select>
 
     <label for="category">Виберіть категорію:</label>
@@ -57,6 +67,24 @@
     <button onclick="sendFeedback('відхилити')">Відхилити</button>
 
     <div id="map"></div>
+
+    <div id="analytics-panel">
+      <h2>Аналіз інфраструктури</h2>
+      <p>Населення: <span id="population"></span></p>
+      <p>Площа (км²): <span id="area"></span></p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Категорія</th>
+            <th>Кількість</th>
+            <th>На 100,000 населення</th>
+            <th>Норма на 100,000</th>
+          </tr>
+        </thead>
+        <tbody id="analytics-body"></tbody>
+      </table>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
@@ -81,9 +109,7 @@
 
         fetch("/recommend", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ category: category, city: city }),
         })
           .then((response) => response.json())
@@ -100,9 +126,11 @@
         markers = [];
 
         locations.forEach((location) => {
-          const marker = L.marker([location.lat, location.lon]).addTo(map);
-          marker.bindPopup(location.name);
-          markers.push(marker);
+          if (location.lat && location.lon) {
+            const marker = L.marker([location.lat, location.lon]).addTo(map);
+            marker.bindPopup(location.name).openPopup();
+            markers.push(marker);
+          }
         });
       }
 
@@ -114,25 +142,17 @@
           "Dnipro, Ukraine": [48.4647, 35.0462],
           "Kharkiv, Ukraine": [49.9935, 36.2304],
           "Zaporizhzhia, Ukraine": [47.8388, 35.1396],
-          "Vinnytsia, Ukraine": [49.2328, 28.4809],
-          "Cherkasy, Ukraine": [49.4444, 32.0598],
-          "Ivano-Frankivsk, Ukraine": [48.9226, 24.7103],
-          "Poltava, Ukraine": [49.5883, 34.5514],
-          "Chernivtsi, Ukraine": [48.2915, 25.9403],
-          "Khmelnytskyi, Ukraine": [49.4216, 26.9965],
         };
-        const coordinates = cityCoordinates[city] || [50.4501, 30.5234];
-        map.setView(coordinates, 12);
+        map.setView(cityCoordinates[city], 12);
       }
 
       function sendFeedback(feedback) {
         const category = document.getElementById("category").value;
         const city = document.getElementById("city").value;
+
         fetch("/recommend", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             category: category,
             feedback: feedback,
@@ -143,6 +163,31 @@
           .then((data) => {
             document.getElementById("recommendation").innerText =
               data.recommendation;
+          });
+      }
+
+      function getAnalytics() {
+        const city = document.getElementById("city").value;
+
+        fetch("/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city: city }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("population").innerText = data.population;
+            document.getElementById("area").innerText =
+              data.area_km2.toFixed(2);
+
+            const analyticsBody = document.getElementById("analytics-body");
+            analyticsBody.innerHTML = "";
+
+            Object.entries(data.analytics).forEach(([category, stats]) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `<td>${category}</td><td>${stats.count}</td><td>${stats.per_capita}</td><td>${stats.norm_per_100k}</td>`;
+              analyticsBody.appendChild(row);
+            });
           });
       }
 

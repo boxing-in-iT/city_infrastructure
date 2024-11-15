@@ -12,26 +12,101 @@
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
     />
     <style>
+      /* General styles */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        color: #2c3e50;
+        margin-top: 20px;
+      }
+
+      label,
+      select,
+      button {
+        font-size: 16px;
+        margin: 10px 5px;
+      }
+
+      select,
+      button {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      button {
+        cursor: pointer;
+        background-color: #3498db;
+        color: #fff;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      /* Container for map and analytics panel */
+      #content-container {
+        display: flex;
+        margin-top: 20px;
+        max-width: 1200px;
+        width: 100%;
+        padding: 10px;
+      }
+
+      /* Map and analytics panel styles */
       #map {
         height: 500px;
-        width: 100%;
-        margin-top: 20px;
+        width: 60%;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-right: 20px;
       }
+
       #analytics-panel {
-        padding: 10px;
-        margin-top: 20px;
-        border: 1px solid #ccc;
-        background-color: #f9f9f9;
+        width: 40%;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       }
+
+      #analytics-panel h2 {
+        color: #2c3e50;
+        font-size: 20px;
+      }
+
+      /* Table styles */
       #analytics-table {
         width: 100%;
         border-collapse: collapse;
+        margin-top: 10px;
       }
+
       #analytics-table th,
       #analytics-table td {
-        padding: 8px;
+        padding: 10px;
         border: 1px solid #ddd;
         text-align: center;
+        font-size: 14px;
+      }
+
+      #analytics-table th {
+        background-color: #3498db;
+        color: #fff;
+      }
+
+      #analytics-table td {
+        background-color: #f9f9f9;
       }
     </style>
   </head>
@@ -63,27 +138,27 @@
     <button onclick="getRecommendation()">Отримати рекомендацію</button>
     <p id="recommendation"></p>
 
-    <button onclick="sendFeedback('підтвердити')">Підтвердити</button>
-    <button onclick="sendFeedback('відхилити')">Відхилити</button>
+    <!-- Container for map and analytics panel -->
+    <div id="content-container">
+      <div id="map"></div>
 
-    <div id="map"></div>
+      <div id="analytics-panel">
+        <h2>Аналіз інфраструктури</h2>
+        <p>Населення: <span id="population"></span></p>
+        <p>Площа (км²): <span id="area"></span></p>
 
-    <div id="analytics-panel">
-      <h2>Аналіз інфраструктури</h2>
-      <p>Населення: <span id="population"></span></p>
-      <p>Площа (км²): <span id="area"></span></p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Категорія</th>
-            <th>Кількість</th>
-            <th>На 100,000 населення</th>
-            <th>Норма на 100,000</th>
-          </tr>
-        </thead>
-        <tbody id="analytics-body"></tbody>
-      </table>
+        <table id="analytics-table">
+          <thead>
+            <tr>
+              <th>Категорія</th>
+              <th>Кількість</th>
+              <th>На 100,000 населення</th>
+              <th>Норма на 100,000</th>
+            </tr>
+          </thead>
+          <tbody id="analytics-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>

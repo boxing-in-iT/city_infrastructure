@@ -154,6 +154,8 @@
               <th>Кількість</th>
               <th>На 100,000 населення</th>
               <th>Норма на 100,000</th>
+              <th>Норма підсчитана моделлю</th>
+              <!-- New column -->
             </tr>
           </thead>
           <tbody id="analytics-body"></tbody>
@@ -260,7 +262,7 @@
 
             Object.entries(data.analytics).forEach(([category, stats]) => {
               const row = document.createElement("tr");
-              row.innerHTML = `<td>${category}</td><td>${stats.count}</td><td>${stats.per_capita}</td><td>${stats.norm_per_100k}</td>`;
+              row.innerHTML = `<td>${category}</td><td>${stats.count}</td><td>${stats.per_capita}</td><td>${stats.norm_per_100k}</td><td>${stats.norm_calculated_by_model}</td>`; <!-- New data -->
               analyticsBody.appendChild(row);
             });
           });
